@@ -53,5 +53,13 @@ fi
 PAPER_EULA=${PAPER_EULA:-false}
 echo "eula=${PAPER_EULA}" > eula.txt
 
+if [ "${PAPER_EULA}" != "true" ]; then
+    echo "--------------------------------------"
+    echo .
+    echo "You may need to set PAPER_EULA=true to accept the EULA."
+    echo .
+    echo "--------------------------------------"
+fi
+
 read -a RECOMMENDED_JVM_FLAGS < "${JVM_FLAGS_FILE}"
 java "${RECOMMENDED_JVM_FLAGS[@]}" ${PAPER_JVM_FLAGS} -jar /paper.jar nogui --plugins /plugins
