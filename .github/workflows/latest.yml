@@ -83,6 +83,7 @@ jobs:
         docker build \
           --build-arg PAPER_URL="${PAPER_URL}" \
           --build-arg SHA256="${SHA256}" \
+          --build-arg JVM_FLAGS="${JVM_FLAGS}" \
           -t ghcr.io/florke-smp/paper:latest \
           -t ghcr.io/florke-smp/paper:${LATEST_VERSION} \
           -t ghcr.io/florke-smp/paper:${LATEST_VERSION}-${LATEST_BUILD} \

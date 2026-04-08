@@ -61,5 +61,4 @@ if [ "${PAPER_EULA}" != "true" ]; then
     echo "--------------------------------------"
 fi
 
-read -a RECOMMENDED_JVM_FLAGS < "${JVM_FLAGS_FILE}"
-java "${RECOMMENDED_JVM_FLAGS[@]}" ${PAPER_JVM_FLAGS} -jar /paper.jar nogui --plugins /plugins
+java ${RECOMMENDED_JVM_FLAGS} ${PAPER_JVM_FLAGS} -jar /paper.jar nogui --plugins /plugins

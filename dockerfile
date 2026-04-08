@@ -13,7 +13,7 @@ RUN mkdir /plugins
 VOLUME /plugins
 
 ### Install APT packages ###
-# Adds AWS repo's GPG keys and installs Amazon's Corretto 21.
+# Adds AWS repo's GPG keys and installs Amazon's Corretto 25.
 # This follows instructions from https://docs.papermc.io/.
 
 ARG JDK_APT_SOURCE="deb [signed-by=/usr/share/keyrings/corretto-keyring.gpg] https://apt.corretto.aws stable main"
@@ -32,7 +32,7 @@ RUN apt-get update && apt-get upgrade -y \
 \
 && apt-get update && apt-get install \
 	--no-install-recommends -y \
-	java-21-amazon-corretto-jdk \
+	java-25-amazon-corretto-jdk \
 	libxi6 \
 	libxtst6 \
 	libxrender1 \
@@ -42,17 +42,19 @@ RUN apt-get update && apt-get upgrade -y \
 # PAPER_URL is provided by .buildargs
 ARG PAPER_URL
 ARG SHA256
+ARG JVM_FLAGS
 
 # Download and verify
 RUN wget -O /paper.jar "${PAPER_URL}" && \
     echo "${SHA256} /paper.jar" | sha256sum -c -
 
+# Write JVM flags to file
+RUN echo "${JVM_FLAGS}" > /paper-jvm-flags.txt
+
 # Entrypoint script
 COPY ./entrypoint.sh /entrypoint.sh
-ENTRYPOINT [ "/entrypoint.sh" ]
 RUN chmod +x /entrypoint.sh
-
-COPY recommended-jvm-flags.txt /paper-jvm-flags.txt
+ENTRYPOINT [ "/entrypoint.sh" ]
 
 # Expose default proxy's port
 EXPOSE 25565
