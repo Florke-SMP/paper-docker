@@ -1,2 +1,5 @@
-PAPER_URL=https://fill-data.papermc.io/v1/objects/23f6560d17e285149c0e486579e3fcc8208dcc171a59c4d021057a9063534732/paper-1.21.10-64.jar
-SHA256=23f6560d17e285149c0e486579e3fcc8208dcc171a59c4d021057a9063534732
+LATEST_VERSION=26.1.1
+LATEST_BUILD=29
+PAPER_URL=https://fill-data.papermc.io/v1/objects/43d08ed52c7af4e9f72769122501a5c15f99c7ace0c428a3eef040fd3f6fdbc5/paper-26.1.1-29.jar
+SHA256=43d08ed52c7af4e9f72769122501a5c15f99c7ace0c428a3eef040fd3f6fdbc5
+JVM_FLAGS=-XX:+AlwaysPreTouch\ -XX:+DisableExplicitGC\ -XX:+ParallelRefProcEnabled\ -XX:+PerfDisableSharedMem\ -XX:+UnlockExperimentalVMOptions\ -XX:+UseG1GC\ -XX:G1HeapRegionSize=8M\ -XX:G1HeapWastePercent=5\ -XX:G1MaxNewSizePercent=40\ -XX:G1MixedGCCountTarget=4\ -XX:G1MixedGCLiveThresholdPercent=90\ -XX:G1NewSizePercent=30\ -XX:G1RSetUpdatingPauseTimePercent=5\ -XX:G1ReservePercent=20\ -XX:InitiatingHeapOccupancyPercent=15\ -XX:MaxGCPauseMillis=200\ -XX:MaxTenuringThreshold=1\ -XX:SurvivorRatio=32
