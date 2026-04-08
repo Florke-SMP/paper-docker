@@ -2,7 +2,7 @@ FROM ubuntu:24.04
 
 LABEL org.opencontainers.image.source="https://www.github.com/Florke-SMP/paper-docker"
 LABEL org.opencontainers.image.description="Docker image for Paper, a Minecraft server software."
-LABEL org.opencontainers.image.licenses="GPL-3.0"
+LABEL org.opencontainers.image.licenses="MIT"
 
 LABEL maintainer="Florke64"
 

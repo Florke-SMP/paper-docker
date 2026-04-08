@@ -34,3 +34,12 @@ docker build \
 --build-arg JVM_FLAGS="$JVM_FLAGS" \
 -t paper-docker:latest .
 ```
+
+## License
+
+Third party licenses:
+
+- Amazon's [Corretto 21](https://github.com/corretto/corretto-21), licensed under the [GPL-2.0](https://github.com/corretto/corretto-21?tab=GPL-2.0-1-ov-file#readme)
+- PaperMC's [Velocity](https://github.com/PaperMC/Velocity), licensed under the [GPL-3.0](https://github.com/PaperMC/Velocity?tab=GPL-3.0-1-ov-file#readme)
+
+Docker build script is licensed under [MIT](https://github.com/Florke-SMP/velocity-docker?tab=MIT-1-ov-file#readme) license.
