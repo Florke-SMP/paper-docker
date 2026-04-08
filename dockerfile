@@ -9,7 +9,10 @@ LABEL maintainer="Florke64"
 WORKDIR /paper
 VOLUME /paper
 
-RUN mkdir /plugins
+RUN groupadd -g 1500 paper \
+    && useradd -u 1500 -g paper -d /paper -s /usr/sbin/nologin paper \
+    && mkdir -p /plugins \
+    && chown -R paper:paper /paper /plugins
 VOLUME /plugins
 
 ### Install APT packages ###
@@ -51,10 +54,16 @@ RUN wget -O /paper.jar "${PAPER_URL}" && \
 # Write JVM flags to file
 RUN echo "${JVM_FLAGS}" > /paper-jvm-flags.txt
 
-# Entrypoint script
+# Entrypoint script and healthcheck
 COPY ./entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY ./healthcheck.sh /healthcheck.sh
+RUN chmod +x /entrypoint.sh /healthcheck.sh \
+    && chown paper:paper /entrypoint.sh /healthcheck.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
+USER paper
 
 # Expose default proxy's port
 EXPOSE 25565
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD ["/healthcheck.sh"]

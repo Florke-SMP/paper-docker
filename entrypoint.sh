@@ -1,29 +1,50 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
-# Supported environment variables:
-# PAPER_RECOMMENDED_JVM_FLAGS: If set to false, skips fetching recommended JVM flags
-# Default: true
+# Defaults for optional environment variables
+PAPER_RECOMMENDED_JVM_FLAGS=${PAPER_RECOMMENDED_JVM_FLAGS:-true}
+PAPER_JVM_FLAGS=${PAPER_JVM_FLAGS:-}
+PAPER_EULA=${PAPER_EULA:-false}
 
-# PAPER_JVM_FLAGS: Additional JVM flags to add to the recommended flags
-# Default: (empty)
-
-# PAPER_EULA: Must be set to "true" to accept the Minecraft EULA
-# Default: false
-
-# Default JVM options variable
 RECOMMENDED_JVM_FLAGS=""
-# File to read JVM flags from
 JVM_FLAGS_FILE="/paper-jvm-flags.txt"
 
 function print_welcome() {
-    echo "Starting dockerized Paper (unofficial image)"
-    echo "by Florke64 | https://github.com/Florke64/paper-docker"
-    echo "----------------------------------------------"
-    echo "Running in directory: $(pwd)"
-    echo "Current user: $(whoami)"
-    echo "Current date and time: $(date)"
+    cat <<EOF
+Starting dockerized Paper (unofficial image)
+by Florke64 | https://github.com/Florke64/paper-docker
+----------------------------------------------
+Running in directory: $(pwd)
+Current user: $(whoami) (uid=$(id -u), gid=$(id -g))
+Current date/time: $(date --rfc-3339=seconds)
+Hostname: $(hostname)
+Uptime: $(uptime -p)
+Kernel: $(uname -sr)
+Disk usage (/paper):
+$(df -h /paper)
+Available memory:
+$(free -h)
+----------------------------------------------
+EOF
+}
+
+function summarize_environment() {
+    cat <<EOF
+Environment summary:
+- PAPER_EULA=${PAPER_EULA}
+- PAPER_RECOMMENDED_JVM_FLAGS=${PAPER_RECOMMENDED_JVM_FLAGS}
+- PAPER_JVM_FLAGS=${PAPER_JVM_FLAGS:-(none)}
+- JVM flags file: ${JVM_FLAGS_FILE}
+EOF
+}
+
+function ensure_directories() {
+    for dir in /paper /plugins; do
+        if [ ! -d "$dir" ]; then
+            mkdir -p "$dir"
+        fi
+    done
 }
 
 function read_recommended_jvm_flags() {
@@ -37,28 +58,45 @@ function read_recommended_jvm_flags() {
 }
 
 print_welcome
+ensure_directories
+summarize_environment
 
-if [ "$PAPER_RECOMMENDED_JVM_FLAGS" = false ]; then
+if [ "${PAPER_RECOMMENDED_JVM_FLAGS}" = false ]; then
     echo "The variable PAPER_RECOMMENDED_JVM_FLAGS is false."
     echo "Skipping loading recommended JVM flags."
-    echo .
-    echo "You can set the PAPER_JVM_FLAGS to use your own JVM flags."
+    echo
+    echo "You can set PAPER_JVM_FLAGS to use your own JVM flags."
 else
     echo "Attempting to load recommended JVM flags."
-    echo "Set the environment variable PAPER_RECOMMENDED_JVM_FLAGS to false to skip this step."
-
+    echo "Set PAPER_RECOMMENDED_JVM_FLAGS=false to skip."
     read_recommended_jvm_flags
 fi
 
-PAPER_EULA=${PAPER_EULA:-false}
 echo "eula=${PAPER_EULA}" > eula.txt
 
 if [ "${PAPER_EULA}" != "true" ]; then
     echo "--------------------------------------"
-    echo .
+    echo
     echo "You may need to set PAPER_EULA=true to accept the EULA."
-    echo .
+    echo
     echo "--------------------------------------"
 fi
 
-java ${RECOMMENDED_JVM_FLAGS} ${PAPER_JVM_FLAGS} -jar /paper.jar nogui --plugins /plugins
+# Ensure server.properties exists and is configured to bind to all interfaces
+if [ ! -f server.properties ] || ! grep -q "server-ip=" server.properties; then
+    echo "server-ip=" >> server.properties
+fi
+
+# Show network configuration for debugging
+echo "Network interfaces:"
+ip addr show 2>/dev/null || echo "ip command not available"
+echo
+echo "Listening ports:"
+netstat -tlnp 2>/dev/null | grep LISTEN || echo "netstat not available or no listening ports"
+echo
+
+echo "Starting Paper server with command:"
+echo "java ${RECOMMENDED_JVM_FLAGS} ${PAPER_JVM_FLAGS} -jar /paper.jar nogui --plugins /plugins"
+echo
+
+exec java ${RECOMMENDED_JVM_FLAGS} ${PAPER_JVM_FLAGS} -jar /paper.jar nogui --plugins /plugins
