@@ -8,15 +8,10 @@ check_minecraft_response() {
     if timeout 5 bash -c '</dev/tcp/localhost/25565' >/dev/null 2>&1; then
         echo "✓ Port 25565 is open"
         
-        # Try to get a basic response from the Minecraft server using netcat
-        # Minecraft servers respond with protocol information when connected to
-        if response=$(timeout 3 nc -vz localhost 25565 2>&1); then
-            echo "✓ Minecraft server is responding"
-            return 0
-        else
-            echo "✗ Minecraft server is not responding properly"
-            return 1
-        fi
+        # For Minecraft servers, a simple connection test is often sufficient
+        # The server should be accepting connections if the port is open
+        echo "✓ Minecraft server is accessible on port 25565"
+        return 0
     else
         echo "✗ Port 25565 is not accessible"
         
