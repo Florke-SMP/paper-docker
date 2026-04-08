@@ -18,24 +18,9 @@ by Florke64 | https://github.com/Florke64/paper-docker
 Running in directory: $(pwd)
 Current user: $(whoami) (uid=$(id -u), gid=$(id -g))
 Current date/time: $(date --rfc-3339=seconds)
-Hostname: $(hostname)
-Uptime: $(uptime -p)
-Kernel: $(uname -sr)
-Disk usage (/paper):
+Hostname: $(hostname), $(uptime -p)
 $(df -h /paper)
-Available memory:
-$(free -h)
 ----------------------------------------------
-EOF
-}
-
-function summarize_environment() {
-    cat <<EOF
-Environment summary:
-- PAPER_EULA=${PAPER_EULA}
-- PAPER_RECOMMENDED_JVM_FLAGS=${PAPER_RECOMMENDED_JVM_FLAGS}
-- PAPER_JVM_FLAGS=${PAPER_JVM_FLAGS:-(none)}
-- JVM flags file: ${JVM_FLAGS_FILE}
 EOF
 }
 
@@ -59,7 +44,6 @@ function read_recommended_jvm_flags() {
 
 print_welcome
 ensure_directories
-summarize_environment
 
 if [ "${PAPER_RECOMMENDED_JVM_FLAGS}" = false ]; then
     echo "The variable PAPER_RECOMMENDED_JVM_FLAGS is false."
@@ -75,14 +59,16 @@ fi
 echo "eula=${PAPER_EULA}" > eula.txt
 
 if [ "${PAPER_EULA}" != "true" ]; then
+    echo "######################################"
     echo "--------------------------------------"
     echo
     echo "You may need to set PAPER_EULA=true to accept the EULA."
     echo
     echo "--------------------------------------"
+    echo "######################################"
 fi
 
-# Ensure server.properties exists and is configured to bind to all interfaces
+# bind to all interfaces
 if [ ! -f server.properties ] || ! grep -q "server-ip=" server.properties; then
     echo "server-ip=" >> server.properties
 fi
@@ -98,5 +84,9 @@ echo
 echo "Starting Paper server with command:"
 echo "java ${RECOMMENDED_JVM_FLAGS} ${PAPER_JVM_FLAGS} -jar /paper.jar nogui --plugins /plugins"
 echo
+
+echo "========= >"
+echo "Server process started."
+echo "============= >"
 
 exec java ${RECOMMENDED_JVM_FLAGS} ${PAPER_JVM_FLAGS} -jar /paper.jar nogui --plugins /plugins
