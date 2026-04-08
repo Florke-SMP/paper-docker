@@ -35,7 +35,7 @@ docker build \
 -t paper-docker:latest .
 ```
 
-## License
+# License
 
 Third party licenses:
 
@@ -43,3 +43,7 @@ Third party licenses:
 - PaperMC's [Velocity](https://github.com/PaperMC/Velocity), licensed under the [GPL-3.0](https://github.com/PaperMC/Velocity?tab=GPL-3.0-1-ov-file#readme)
 
 Docker build script is licensed under [MIT](https://github.com/Florke-SMP/velocity-docker?tab=MIT-1-ov-file#readme) license.
+
+# AI Notice
+
+Parts of this project might be *[vibe coded 🤙](https://en.wikipedia.org/wiki/Vibe_coding)*, meaning they were modified or partially generated with sort of [AI ✨](https://en.wikipedia.org/wiki/Large_language_model). That said, as far as I do care for this repo (for my own use too btw) - it probably shouldn't be used in any critical environment, as this is hobby and *vibe* project 🕊️
