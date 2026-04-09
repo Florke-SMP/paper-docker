@@ -43,45 +43,59 @@ function ensure_directories() {
 function write_server_property() {
     local key="$1"
     local value="$2"
-    local file="${SERVER_PROPERTIES_FILE}"
-    local temp
-    temp=$(mktemp)
-    local added=false
-
-    if [ -f "$file" ]; then
-        while IFS= read -r line || [ -n "${line}" ]; do
-            if [[ "${line}" == "${key}"=* ]]; then
-                if [ "$added" = false ]; then
-                    printf '%s\n' "${key}=${value}" >> "$temp"
-                    added=true
-                fi
-                continue
-            fi
-            printf '%s\n' "$line" >> "$temp"
-        done <"$file"
-    fi
-
-    if [ "$added" = false ]; then
-        printf '%s\n' "${key}=${value}" >> "$temp"
-    fi
-
-    mv "$temp" "$file"
+    local prop_file="${SERVER_PROPERTIES_FILE:-server.properties}"
+    local tmp_file
+    
+    touch "$prop_file"
+    tmp_file=$(mktemp)
+    
+    # awk is preferred here over sed because sed is highly susceptible to delimiter 
+    # collision and regex injection if the injected value contains special characters 
+    # (like '&', '/', or '\'). awk safely treats passed variables as literal strings.
+    awk -v k="$key" -v v="$value" '
+        BEGIN { 
+            # Split by the first equals sign
+            FS="=" 
+        }
+        $1 == k {
+            if (!found) {
+                # First time we see the key, print the updated key=value pair
+                print k "=" v
+                found = 1
+            }
+            # Skip the line so we strip out any subsequent duplicate keys
+            next
+        }
+        { 
+            # Print all other lines untouched
+            print 
+        }
+        END {
+            # If the entire file was read and the key was never found, append it
+            if (!found) {
+                print k "=" v
+            }
+        }
+    ' "$prop_file" > "$tmp_file"
+    
+    # Overwrite using cat instead of mv to preserve original file permissions and inodes
+    cat "$tmp_file" > "$prop_file"
+    rm -f "$tmp_file"
 }
 
 function configure_rcon() {
     if [ -z "${PAPER_RCON_PASSWORD}" ]; then
-        echo "RCON not enabled (set PAPER_RCON_PASSWORD to enable remote console access)."
+        echo "RCON not enabled. To enable, set PAPER_RCON_PASSWORD environment variable."
         return
     fi
 
-    echo "Enabling RCON access on port ${RCON_PORT}."
+    echo "Enabling RCON (port: ${RCON_PORT}), PAPER_RCON_BROADCAST=${PAPER_RCON_BROADCAST}"
+    
     touch "${SERVER_PROPERTIES_FILE}"
     write_server_property enable-rcon true
     write_server_property rcon.password "${PAPER_RCON_PASSWORD}"
     write_server_property rcon.port "${RCON_PORT}"
     write_server_property broadcast-rcon-to-ops "${PAPER_RCON_BROADCAST}"
-    echo "PAPER_RCON_BROADCAST=${PAPER_RCON_BROADCAST}"
-    echo "--- RCON is not encrypted; ensure only trusted clients can reach port ${RCON_PORT}."
 }
 
 function adjust_mount_permissions() {
