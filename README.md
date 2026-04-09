@@ -4,6 +4,8 @@ Docker image build scripts for Minecraft Server software: Paper
 
 # Running
 
+Quick start:
+
 ```
 docker run -d \
   -e PAPER_EULA=true \
@@ -11,6 +13,23 @@ docker run -d \
   -v ./data:/paper \
   -v ./plugins:/plugins \
   ghcr.io/florke-smp/paper:latest
+```
+
+> Container drops privilages at some point at runtime and becomes `paper` user (UID/GID 1500).
+
+```
+version: '3.9'
+services:
+  paper:
+    image: ghcr.io/florke-smp/paper:dev
+    ports:
+      - 25565:25565
+    environment:
+      PAPER_EULA: "true"
+    volumes:
+      - ./data:/paper
+      - ./plugins:/plugins
+    restart: unless-stopped
 ```
 
 # Environment

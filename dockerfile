@@ -60,7 +60,6 @@ COPY ./healthcheck.sh /healthcheck.sh
 RUN chmod +x /entrypoint.sh /healthcheck.sh \
     && chown paper:paper /entrypoint.sh /healthcheck.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
-USER paper
 
 # Expose default proxy's port
 EXPOSE 25565

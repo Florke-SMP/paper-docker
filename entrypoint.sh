@@ -2,13 +2,15 @@
 
 set -euo pipefail
 
-# Defaults for optional environment variables
 PAPER_RECOMMENDED_JVM_FLAGS=${PAPER_RECOMMENDED_JVM_FLAGS:-true}
 PAPER_JVM_FLAGS=${PAPER_JVM_FLAGS:-}
 PAPER_EULA=${PAPER_EULA:-false}
 
 RECOMMENDED_JVM_FLAGS=""
 JVM_FLAGS_FILE="/paper-jvm-flags.txt"
+PAPER_USER="paper"
+PAPER_UID=1500
+PAPER_GID=1500
 
 function print_welcome() {
     cat <<EOF
@@ -19,7 +21,7 @@ Running in directory: $(pwd)
 Current user: $(whoami) (uid=$(id -u), gid=$(id -g))
 Current date/time: $(date --rfc-3339=seconds)
 Hostname: $(hostname), $(uptime -p)
-$(df -h /paper)
+$(df -h /paper 2>/dev/null || echo "/paper not mounted yet")
 ----------------------------------------------
 EOF
 }
@@ -28,6 +30,21 @@ function ensure_directories() {
     for dir in /paper /plugins; do
         if [ ! -d "$dir" ]; then
             mkdir -p "$dir"
+        fi
+    done
+}
+
+function adjust_mount_permissions() {
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "Skipping ownership adjustment (not running as root)."
+        return
+    fi
+
+    echo "Ensuring ${PAPER_USER}:${PAPER_USER} owns /paper and /plugins."
+    for dir in /paper /plugins; do
+        if [ -d "$dir" ]; then
+            chown -R ${PAPER_UID}:${PAPER_GID} "$dir" || true
+            chmod 750 "$dir" || true
         fi
     done
 }
@@ -44,6 +61,7 @@ function read_recommended_jvm_flags() {
 
 print_welcome
 ensure_directories
+adjust_mount_permissions
 
 if [ "${PAPER_RECOMMENDED_JVM_FLAGS}" = false ]; then
     echo "The variable PAPER_RECOMMENDED_JVM_FLAGS is false."
@@ -89,4 +107,15 @@ echo "========= >"
 echo "Server process started."
 echo "============= >"
 
-exec java ${RECOMMENDED_JVM_FLAGS} ${PAPER_JVM_FLAGS} -jar /paper.jar nogui --plugins /plugins
+JAVA_CMD=(java)
+if [ -n "${RECOMMENDED_JVM_FLAGS}" ]; then
+    read -r -a RECOMMENDED_ARRAY <<<"${RECOMMENDED_JVM_FLAGS}"
+    JAVA_CMD+=("${RECOMMENDED_ARRAY[@]}")
+fi
+JAVA_CMD+=(-jar /paper.jar nogui --plugins /plugins)
+
+if command -v runuser >/dev/null 2>&1 && [ "$(id -u)" -eq 0 ]; then
+    exec runuser -u ${PAPER_USER} -- "${JAVA_CMD[@]}"
+else
+    exec "${JAVA_CMD[@]}"
+fi
