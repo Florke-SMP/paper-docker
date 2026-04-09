@@ -52,10 +52,14 @@ function write_server_property() {
     # awk is preferred here over sed because sed is highly susceptible to delimiter 
     # collision and regex injection if the injected value contains special characters 
     # (like '&', '/', or '\'). awk safely treats passed variables as literal strings.
-    awk -v k="$key" -v v="$value" '
+    # Use ENVIRON to fetch values so awk does not interpret escape sequences.
+    AWK_KEY="$key" AWK_VAL="$value" awk '
         BEGIN { 
             # Split by the first equals sign
             FS="=" 
+            # Fetch raw strings directly from the environment
+            k = ENVIRON["AWK_KEY"]
+            v = ENVIRON["AWK_VAL"]
         }
         $1 == k {
             if (!found) {

@@ -13,8 +13,7 @@ export SERVER_PROPERTIES_FILE="server.properties"
 
 source "${SCRIPT_DIR}/entrypoint.sh"
 
-# --- Test Helpers ---
-# Added basic ANSI colors for better CLI readability
+# --- Utils ---
 pass() { echo -e "[\033[32mPASS\033[0m] $1"; }
 fail() { echo -e "[\033[31mFAIL\033[0m] $1"; exit 1; }
 
