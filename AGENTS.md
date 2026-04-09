@@ -23,6 +23,8 @@ When modifying Dockerfiles or build scripts, you must strictly adhere to the fol
 4. Default to `vim` for any command-line text editing suggestions you provide to the user.
 5. Explicitly define Docker network port mappings and volume mounts when generating `docker run` commands.
 6. Verify changes by suggesting `docker build` and `docker logs` or `docker inspect` commands; do not assume a successful build means the runtime is functioning.
+7. Do not add heavy runtime dependencies (Python, Node, etc.); perform manipulations with POSIX shell or existing base image tools instead.
+8. Prefer adding small helper functions over rewriting large blocks of existing code when extending functionality.
 </rules>
 
 <output_format>
