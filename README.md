@@ -1,10 +1,30 @@
 # paper-docker
 
-Docker image build scripts for Minecraft Server software: Paper
+Docker image build scripts for Paper, a Minecraft Server software.
+Automated container image builds are available at project's [packages](https://github.com/Florke-SMP/paper-docker/pkgs/container/paper) page.
+
+## Available images
+
+Get the latest available image
+```
+docker pull ghcr.io/florke-smp/paper:latest
+```
+
+
+Or pinpoint specific version
+```
+docker pull ghcr.io/florke-smp/paper:26.1.1
+
+# Each build is tagged unique number
+# https://fill-ui.papermc.io/projects/paper/version/26.1.1?build=29
+docker pull ghcr.io/florke-smp/paper:26.1.1-29
+```
 
 # Running
 
 Quick start:
+
+> By appending EULA=true, you agree to https://www.minecraft.net/en-us/eula
 
 ```
 docker run -d \
@@ -17,8 +37,9 @@ docker run -d \
 
 > Container drops privilages at some point at runtime and becomes `paper` user (UID/GID 1500).
 
+Or with docker compose:
+
 ```
-version: '3.9'
 services:
   paper:
     image: ghcr.io/florke-smp/paper:dev
@@ -40,8 +61,6 @@ services:
 
 # Building locally
 
-> Automatic builds are available at project's [Packages](https://github.com/Florke-SMP/paper-docker/pkgs/container/paper) site.
-
 ```
 # Update .buildargs to the latest version
 ./paper-latest.sh
@@ -58,11 +77,9 @@ docker build \
 
 Third party licenses:
 
-- Amazon's [Corretto 21](https://github.com/corretto/corretto-21), licensed under the [GPL-2.0](https://github.com/corretto/corretto-21?tab=GPL-2.0-1-ov-file#readme)
+- Amazon's [Corretto 25](https://github.com/corretto/corretto-25), licensed under the [GPL-2.0](https://github.com/corretto/corretto-25?tab=GPL-2.0-1-ov-file#readme)
 - PaperMC's [Velocity](https://github.com/PaperMC/Velocity), licensed under the [GPL-3.0](https://github.com/PaperMC/Velocity?tab=GPL-3.0-1-ov-file#readme)
 
-Docker build script is licensed under [MIT](https://github.com/Florke-SMP/velocity-docker?tab=MIT-1-ov-file#readme) license.
+Docker build script is licensed under [MIT](https://github.com/Florke-SMP/paper-docker?tab=MIT-1-ov-file#readme) license.
 
-# AI Notice
-
-Parts of this project might be *[vibe coded 🤙](https://en.wikipedia.org/wiki/Vibe_coding)*, meaning they were modified or partially generated with sort of [AI ✨](https://en.wikipedia.org/wiki/Large_language_model). That said, as far as I do care for this repo (for my own use too btw) - it probably shouldn't be used in any critical environment, as this is hobby and *vibe* project 🕊️
+Parts of this project might have been *[vibe coded](https://en.wikipedia.org/wiki/Vibe_coding)*.
