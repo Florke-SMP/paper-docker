@@ -1,22 +1,21 @@
 #!/bin/bash
+set -euo pipefail
 
-minecraft_healthcheck() {
-    # try tcp port 25565
-    if timeout 5 bash -c '</dev/tcp/localhost/25565' >/dev/null 2>&1; then
-        echo "Port 25565 is accessible"
+check_port() {
+    local port=$1
+    if timeout 5 bash -c "</dev/tcp/localhost/${port}" >/dev/null 2>&1; then
+        echo "Port ${port} is accessible"
         return 0
-    else
-        echo "Port 25565 is not accessible"
-        
-        echo "The container 'LISTEN' ports (via netstat):"
-        netstat -tlnp 2>/dev/null | grep LISTEN || echo "No listeners found"
-        
-        return 1
     fi
+
+    echo "Port ${port} is not accessible"
+    echo "The container 'LISTEN' ports (via netstat):"
+    netstat -tlnp 2>/dev/null | grep LISTEN || echo "No listeners found"
+    return 1
 }
 
-if minecraft_healthcheck; then
-    exit 0
-else
-    exit 1
+check_port 25565
+
+if [ -n "${PAPER_RCON_PASSWORD:-}" ]; then
+    check_port 25575
 fi
