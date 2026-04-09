@@ -59,6 +59,8 @@ services:
 |----------|-------|
 | PAPER_EULA | Must be set to "true" to accept the Minecraft EULA |
 
+[Learn more](https://github.com/Florke-SMP/paper-docker/wiki/Environment-Variables)
+
 # Building locally
 
 ```
