@@ -58,6 +58,8 @@ services:
 | Variable | Usage |
 |----------|-------|
 | PAPER_EULA | Must be set to "true" to accept the Minecraft EULA |
+| PAPER_RCON_PASSWORD | Enables RCON when set, writing a strong secret to `server.properties`. Expose host port `25575` to reach the console. |
+| PAPER_RCON_BROADCAST | Mirrors `broadcast-rcon-to-ops` (defaults to `true`); set to `false` if RCON output should stay private. |
 
 [Learn more](https://github.com/Florke-SMP/paper-docker/wiki/Environment-Variables)
 
