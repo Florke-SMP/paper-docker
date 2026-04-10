@@ -3,19 +3,19 @@
 set -euo pipefail
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  PAPER_RECOMMENDED_JVM_FLAGS=${PAPER_RECOMMENDED_JVM_FLAGS:-true}
-  PAPER_JVM_FLAGS=${PAPER_JVM_FLAGS:-}
-  PAPER_EULA=${PAPER_EULA:-false}
-  PAPER_RCON_PASSWORD=${PAPER_RCON_PASSWORD:-}
-  PAPER_RCON_BROADCAST=${PAPER_RCON_BROADCAST:-true}
+    PAPER_RECOMMENDED_JVM_FLAGS=${PAPER_RECOMMENDED_JVM_FLAGS:-true}
+    PAPER_JVM_FLAGS=${PAPER_JVM_FLAGS:-}
+    PAPER_EULA=${PAPER_EULA:-false}
+    PAPER_RCON_PASSWORD=${PAPER_RCON_PASSWORD:-}
+    PAPER_RCON_BROADCAST=${PAPER_RCON_BROADCAST:-true}
 
-  RECOMMENDED_JVM_FLAGS=""
-  JVM_FLAGS_FILE="/paper-jvm-flags.txt"
-  PAPER_USER="paper"
-  PAPER_UID=1500
-  PAPER_GID=1500
-  SERVER_PROPERTIES_FILE="server.properties"
-  RCON_PORT=25575
+    RECOMMENDED_JVM_FLAGS=""
+    JVM_FLAGS_FILE="/paper-jvm-flags.txt"
+    PAPER_USER="paper"
+    PAPER_UID=1500
+    PAPER_GID=1500
+    SERVER_PROPERTIES_FILE="server.properties"
+    RCON_PORT=25575
 fi
 
 function print_welcome() {
@@ -127,66 +127,114 @@ function read_recommended_jvm_flags() {
     fi
 }
 
+function handle_shutdown() {
+    trap - TERM INT
+    echo "Received SIGTERM, initiating graceful shutdown..." >&2
+
+    if [ -n "${SERVER_PID}" ]; then
+        # Send stop command directly to the coprocess stdin pipe
+        echo "stop" >&"${SERVER_PROC[1]}" || true
+
+        local timeout
+        timeout=60
+        while kill -0 "${SERVER_PID}" 2>/dev/null && [ "${timeout}" -gt 0 ]; do
+            sleep 1
+            timeout=$((timeout - 1))
+        done
+
+        if kill -0 "${SERVER_PID}" 2>/dev/null; then
+            echo "Timeout reached (60s). Force killing server process (${SERVER_PID})..." >&2
+            kill -9 "${SERVER_PID}" 2>/dev/null || true
+        else
+            echo "Server stopped gracefully." >&2
+        fi
+    fi
+
+    exit 0
+}
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  print_welcome
-  ensure_directories
-  adjust_mount_permissions
-  configure_rcon
+    print_welcome
+    ensure_directories
+    adjust_mount_permissions
+    configure_rcon
 
-  if [ "${PAPER_RECOMMENDED_JVM_FLAGS}" = false ]; then
-      echo "The variable PAPER_RECOMMENDED_JVM_FLAGS is false."
-      echo "Skipping loading recommended JVM flags."
-      echo
-      echo "You can set PAPER_JVM_FLAGS to use your own JVM flags."
-  else
-      echo "Attempting to load recommended JVM flags."
-      echo "Set PAPER_RECOMMENDED_JVM_FLAGS=false to skip."
-      read_recommended_jvm_flags
-  fi
+    if [ "${PAPER_RECOMMENDED_JVM_FLAGS}" = false ]; then
+        echo "The variable PAPER_RECOMMENDED_JVM_FLAGS is false."
+        echo "Skipping loading recommended JVM flags."
+        echo
+        echo "You can set PAPER_JVM_FLAGS to use your own JVM flags."
+    else
+        echo "Attempting to load recommended JVM flags."
+        echo "Set PAPER_RECOMMENDED_JVM_FLAGS=false to skip."
+        read_recommended_jvm_flags
+    fi
 
-  echo "eula=${PAPER_EULA}" > eula.txt
+    echo "eula=${PAPER_EULA}" > eula.txt
 
-  if [ "${PAPER_EULA}" != "true" ]; then
-      echo "######################################"
-      echo "--------------------------------------"
-      echo
-      echo "You may need to set PAPER_EULA=true to accept the EULA."
-      echo
-      echo "--------------------------------------"
-      echo "######################################"
-  fi
+    if [ "${PAPER_EULA}" != "true" ]; then
+        echo "######################################"
+        echo "--------------------------------------"
+        echo
+        echo "You may need to set PAPER_EULA=true to accept the EULA."
+        echo
+        echo "--------------------------------------"
+        echo "######################################"
+    fi
 
-  # bind to all interfaces
-  if [ ! -f server.properties ] || ! grep -q "server-ip=" server.properties; then
-      echo "server-ip=" >> server.properties
-  fi
+    # bind to all interfaces
+    if [ ! -f server.properties ] || ! grep -q "server-ip=" server.properties; then
+        echo "server-ip=" >> server.properties
+    fi
 
-  # Show network configuration for debugging
-  echo "Network interfaces:"
-  ip addr show 2>/dev/null || echo "ip command not available"
-  echo
-  echo "Listening ports:"
-  netstat -tlnp 2>/dev/null | grep LISTEN || echo "netstat not available or no listening ports"
-  echo
+    # Show network configuration for debugging
+    echo "Network interfaces:"
+    ip addr show 2>/dev/null || echo "ip command not available"
+    echo
+    echo "Listening ports:"
+    netstat -tlnp 2>/dev/null | grep LISTEN || echo "netstat not available or no listening ports"
+    echo
 
-  echo "Starting Paper server with command:"
-  echo "java ${RECOMMENDED_JVM_FLAGS} ${PAPER_JVM_FLAGS} -jar /paper.jar nogui --plugins /plugins"
-  echo
+    JAVA_CMD=(java)
+    if [ -n "${RECOMMENDED_JVM_FLAGS}" ]; then
+        read -r -a RECOMMENDED_ARRAY <<<"${RECOMMENDED_JVM_FLAGS}"
+        JAVA_CMD+=("${RECOMMENDED_ARRAY[@]}")
+    fi
+    JAVA_CMD+=(-jar /paper.jar nogui --plugins /plugins)
 
-  echo "========= >"
-  echo "Server process started."
-  echo "============= >"
+    # Install trap for Docker termination signals
+    trap 'handle_shutdown' TERM INT
 
-  JAVA_CMD=(java)
-  if [ -n "${RECOMMENDED_JVM_FLAGS}" ]; then
-      read -r -a RECOMMENDED_ARRAY <<<"${RECOMMENDED_JVM_FLAGS}"
-      JAVA_CMD+=("${RECOMMENDED_ARRAY[@]}")
-  fi
-  JAVA_CMD+=(-jar /paper.jar nogui --plugins /plugins)
+    echo "Starting Paper server with command:"
+    echo "java ${RECOMMENDED_JVM_FLAGS} ${PAPER_JVM_FLAGS} -jar /paper.jar nogui --plugins /plugins"
+    echo
 
-  if command -v runuser >/dev/null 2>&1 && [ "$(id -u)" -eq 0 ]; then
-      exec runuser -u ${PAPER_USER} -- "${JAVA_CMD[@]}"
-  else
-      exec "${JAVA_CMD[@]}"
-  fi
+    echo "========= >"
+    echo "Server process started."
+    echo "============= >"
+
+    if [ "$(id -u)" -eq 0 ]; then
+        # We are root. We MUST have runuser to drop privileges.
+        if ! command -v runuser >/dev/null 2>&1; then
+            echo "FATAL: Container started as root, but 'runuser' is missing. Aborting to prevent running server as root." >&2
+            exit 1
+        fi
+
+        echo "User context about to switch to '${PAPER_USER}' for the server process."
+        coproc SERVER_PROC {
+            runuser -u "${PAPER_USER}" -- bash -c "exec ${JAVA_CMD[*]}" >&1 2>&2
+        }
+    else
+        echo "Running natively as non-root user (uid=$(id -u))."
+        coproc SERVER_PROC {
+            exec "${JAVA_CMD[@]}" >&1 2>&2
+        }
+    fi
+
+    SERVER_PID=$SERVER_PROC_PID
+
+    # Wait on the background process
+    # 'wait' will be interrupted by the trap when a signal is received
+    wait $SERVER_PID
+    exit $?
 fi
